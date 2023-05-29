@@ -1,0 +1,238 @@
+This document describes migration of SL7.9 to AL8.7 to AL91.
+
+
+yum update
+reboot
+
+rm -rf /usr/share/doc/redhat-release/
+rm -rf /usr/share/redhat-release/
+
+sudo yum update -y
+
+sudo yum install -y http://repo.almalinux.org/elevate/elevate-release-latest-el$(rpm --eval %rhel).noarch.rpm
+
+sudo yum install -y leapp-upgrade leapp-data-almalinux
+
+sudo leapp preupgrade
+
+sudo rmmod pata_acpi
+
+echo PermitRootLogin yes | sudo tee -a /etc/ssh/sshd_config
+
+sudo leapp answer --section remove_pam_pkcs11_module_check.confirm=True
+
+sudo leapp preupgrade
+
+nano /etc/leapp/files/pes-events.json
+
+In the above file Replace centos-release --> sl-release
+
+Include the following in the lines "Carefully"
+
+   {
+     "action": 3,
+     "arches": [
+       "x86_64",
+       "aarch64"
+     ],
+     "id": 10000,
+     "in_packageset": {
+       "package": [
+         {
+           "module_stream": null,
+           "name": "sl-logos",
+           "repository": "base"
+         }
+       ],
+       "set_id": 10000
+     },
+     "initial_release": {
+       "major_version": 7,
+       "minor_version": 7,
+       "os_name": "CentOS"
+     },
+     "is_approved": true,
+     "out_packageset": {
+       "package": [
+         {
+           "module_stream": null,
+           "name": "almalinux-logos",
+           "repository": "almalinux8-baseos"
+         }
+       ],
+       "set_id": 10001
+     },
+     "release": {
+       "major_version": 8,
+       "minor_version": 0,
+       "os_name": "AlmaLinux"
+     }
+   },
+
+sudo leapp upgrade
+
+                                ======You should get a Green ======= ********
+
+                      END OF REPORT                        
+
+                                ==================================== ********
+
+reboot
+
+    Check if you get the correct version
+
+ cat /etc/os-release
+
+    This upgrade is successful and does not require selinux=0
+    and also does not require --releasever to update as in previous tries to make this migration
+    Now AL8.7 upgrade to AL9.1
+
+This part required more hand edits and commands.
+
+dnf update
+cd /etc/yum.repos.d/
+rm -rf repos.repo
+rm -rf sl-extras.repo
+
+dnf update
+
+sudo yum install -y http://repo.almalinux.org/elevate/elevate-release-latest-el$(rpm --eval %rhel).noarch.rpm
+
+sudo yum install -y leapp-upgrade leapp-data-almalinux --allowerasing
+
+cd /etc/yum.repos.d/
+
+rpm -qa | grep elevate
+yum remove elevate-release-1.0-2.el8.noarch
+yum remove leapp-upgrade-el7toel8-0.16.0-6.el7.elevate.8.noarch
+yum clean all
+
+dnf repolist
+sudo yum install -y http://repo.almalinux.org/elevate/elevate-release-latest-el$(rpm --eval %rhel).noarch.rpm
+sudo yum install -y leapp-upgrade leapp-data-almalinux
+
+yum remove leapp-data-almalinux-0.2-2.el8.noarch
+yum remove leapp-upgrade-el7toel8-1:0.16.0-6.el7.elevate.8.noarch
+
+reboot
+dnf repolist
+
+rpm -qa | grep elevate
+yum remove leapp-upgrade-el7toel8-0.16.0-6.el7.elevate.8.noarch
+yum remove elevate-release-1.0-2.el8.noarch
+
+rpm -qa | grep elevate
+yum remove leapp-upgrade-el7t
+
+yum remove elevate-release-1.0-2.el8.noarch
+rpm -qa | grep elevate
+yum remove leapp-upgrade-el7toel8-0.16.0-6.el7.elevate.8.noarch
+yum list installed | grep elevate
+
+yum update -y
+nano /etc/sysconfig/selinux
+reboot
+
+nano /etc/firewalld/firewalld.conf
+nano /etc/sysconfig/selinux
+nano /etc/firewalld/firewalld.conf
+
+reboot
+
+touch /.autorelable
+
+reboot
+
+semanage fcontext -a -t FILE_TYPE '104942c09bd393b58f024906092c682678d551'
+ausearch -c 'gnome-shell' --raw | audit2allow -M my-gnomeshell
+semodule -i my-gnomeshell.pp
+
+rpm -qa | grep elevate
+rm /etc/dnf/vars/releasever
+
+cat /etc/os-release
+cat /etc/dnf/vars/releasever
+
+dnf remove leapp-upgrade-el7toel8
+
+rpm -qa | grep elevate
+
+rpm -e leapp-upgrade-el7toel8-0.16.0-6.el7.elevate.8.noarch
+rpm -e leapp-0.14.0-1.el7.noarch
+rpm -e leapp-upgrade-el7toel8-1:0.16.0-6.el7.elevate.8.noarch
+
+dnf remove leapp-0.14.0-1.el7.noarch
+rpm -e leapp-upgrade-el7toel8-1:0.16.0-6.el7.elevate.8.noarch
+ 
+cd /etc/yum.repos.d/
+  
+dnf repolist all
+yum-config-manager --disable elevate
+yum-config-manager --disable elevate-testing
+
+dnf repolist all
+
+rpm -qa | grep elevate
+rpm -e leapp-upgrade-el7toel8-1:0.16.0-6.el7.elevate.8.noarch
+rpm -e elevate-release-1.0-2.el8.noarch
+rpm -e leapp-upgrade-el7toel8-1:0.16.0-6.el7.elevate.8.noarch
+rpm -e leapp-upgrade-el7toel8-1:0.16.0-6.el7.elevate.8.noarch --nodep
+rpm -e leapp-upgrade-el7toel8-1:0.16.0-6.el7.elevate.8.noarch --nodeps
+rpm -qa | grep elevate
+
+dnf repolist all
+
+wget https://repo.almalinux.org/almalinux/8/AppStream/x86_64/os/Packages leapp-0.15.0-2.el8.noarch.rpm
+
+wget https://repo.almalinux.org/almalinux/8/AppStream/aarch64/os/Packages/python3-leapp-0.15.0-2.el8.noarch.rpm
+
+rpm -i python3-leapp-0.15.0-2.el8.noarch.rpm
+rpm -i leapp-0.15.0-2.el8.noarch.rpm
+
+sudo yum install -y leapp-upgrade leapp-data-almalinux
+
+sudo leapp preupgrade
+
+    UPGRADE INHIBITED
+    Upgrade has been inhibited due to the following problems:
+    1. Inhibitor: Detected RPMs with RSA/SHA1 signature
+    2. Inhibitor: Firewalld Configuration AllowZoneDrifting Is Unsupported
+    Consult the pre-upgrade report for details and possible remediation.
+
+nano /etc/firewalld/firewalld.conf
+
+Set AllowZoneDrifting to NO
+
+rpm -qa | grep sl-indexhtml
+rpm -e sl-indexhtml-7-5.sl7.noarch --nodeps
+
+rpm -qa | grep sl-
+rpm -e sl-release-notes-7.9-1.sl7.noarch --nodeps
+
+rpm -qa | grep yum-plu
+rpm -e yum-plugin-upgrade-helper-1.1.31-54.el7_8.noarch
+
+rpm -qa | grep yum-conf
+rpm -e yum-conf-repos-1.0-1.el7.noarch -nodeps
+rpm -e yum-conf-extras-1.0-1.el7.noarch
+
+rpm -qa | grep btrfs-progs 
+rpm -e btrfs-progs-4.9.1-1.el7.x86_64
+ 
+rpm -qa | grep kernel
+
+rpm -e kernel-3.10.0-1160.el7.x86_64
+rpm -e kernel-3.10.0-1160.90.1.el7.x86_64
+
+sudo leapp preupgrade
+
+sudo leapp upgrade
+
+rpm -e make-devel-1:4.2.1-11.el8.x86_64
+
+sudo leapp upgrade
+
+cat /etc/os-release
+
+    NAME="AlmaLinux"
+    VERSION="9.1 (Lime Lynx)"
